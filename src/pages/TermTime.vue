@@ -17,22 +17,40 @@ import PageTitle from "../components/PageTitle.vue";
 const initialValue = ref({
   termYear: new Date().getFullYear().toString(),
   term: "上",
-  termStartDate: "1970-01-01"
+  termStartDate: "1970-01-01",
+  scoreTerm: "上",
+  scoreYear: new Date().getFullYear().toString(),
+  schoolBusUrl: "暂无",
+  jpgUrl: "暂无",
+  fileUrl: "暂无",
+  register: "暂无",
 });
 
 const termYearValue = ref(initialValue.value.termYear);
 const termValue = ref(initialValue.value.term);
 const termStartDateValue = ref(initialValue.value.termStartDate);
+const scoreTermValue = ref(initialValue.value.scoreTerm);
+const scoreYearValue = ref(initialValue.value.scoreYear);
+const schoolBusUrlValue = ref(initialValue.value.schoolBusUrl);
+const jpgUrlValue = ref(initialValue.value.jpgUrl);
+const fileUrlValue = ref(initialValue.value.fileUrl);
+const registerTips = ref(initialValue.value.register);
 const dialog = useDialog();
 
 onMounted(async () => {
   try {
     const { code, data, msg } = await getSystemInfo();
     if (code !== 1) throw new Error(msg);
-    const { term, termStartDate, termYear } = data;
+    const { term, termStartDate, termYear,scoreTerm,scoreYear,schoolBusUrl,jpgUrl,fileUrl,register } = data;
     termYearValue.value = termYear;
     termValue.value = term;
     termStartDateValue.value = termStartDate;
+    scoreTermValue.value = scoreTerm;
+    scoreYearValue.value = scoreYear;
+    schoolBusUrlValue.value = schoolBusUrl;
+    jpgUrlValue.value = jpgUrl;
+    fileUrlValue.value = fileUrl;
+    registerTips.value = register;
     initialValue.value = data;
   } catch (e) {
     console.log(e);
@@ -62,7 +80,9 @@ const handleSubmit = async () => {
         const res = await setTermInfoAPI({
           yearValue: termYearValue.value,
           termValue: termValue.value,
-          termStartDateValue: termStartDateValue.value
+          termStartDateValue: termStartDateValue.value,
+          scoreTermValue:scoreTermValue.value,
+          scoreYearValue:scoreYearValue.value,
         });
         const { code, msg } = res;
         if (code !== 1) throw new Error(msg);
@@ -71,6 +91,58 @@ const handleSubmit = async () => {
       }
     }
   });
+};
+
+const noticeSubmit = async () => {
+  dialog.warning({
+    title: "警告",
+    content: `确认发布新生注册提醒么？`,
+    positiveText: "确定",
+    negativeText: "回去改一下",
+    onPositiveClick: async () => {
+      try {
+        const res = await setTermInfoAPI({
+          registerTips:registerTips.value,
+        });
+        const { code, msg } = res;
+        if (code !== 1) throw new Error(msg);
+      } catch (e) {
+        console.log(e);
+      }
+    }
+  });
+};
+
+const noticeReset = () => {
+  registerTips.value=initialValue.value.register;
+};
+
+const urlSubmit = async () => {
+  dialog.warning({
+    title: "警告",
+    content: `确认更改URL前缀么?`,
+    positiveText: "确定",
+    negativeText: "回去改一下",
+    onPositiveClick: async () => {
+      try {
+        const res = await setTermInfoAPI({
+          jpgUrlValue: jpgUrlValue.value,
+          fileUrlValue: fileUrlValue.value,
+          schoolBusUrlValue:schoolBusUrlValue.value,
+        });
+        const { code, msg } = res;
+        if (code !== 1) throw new Error(msg);
+      } catch (e) {
+        console.log(e);
+      }
+    }
+  });
+};
+
+const urlReset = async () => {
+  schoolBusUrlValue.value = initialValue.value.schoolBusUrl,
+  jpgUrlValue.value = initialValue.value.jpgUrl,
+  fileUrlValue.value = initialValue.value.fileUrl;
 };
 </script>
 
@@ -94,7 +166,12 @@ const handleSubmit = async () => {
       <n-date-picker v-model:formatted-value="termStartDateValue" value-format="yyyy-MM-dd" type="date"
         style="width: 400px" />
     </n-form-item>
-
+    <n-form-item label="成绩查询学年选择">
+      <n-date-picker v-model:formatted-value="scoreYearValue" value-format="yyyy" type="year" style="width: 400px" />
+    </n-form-item>
+    <n-form-item label="成绩查询学期选择">
+      <n-select v-model:value="scoreTermValue" :options="optionsTerm" clearable />
+    </n-form-item>
     <n-form-item>
       <n-space>
         <n-button id="update" type="success" @click="handleSubmit">
@@ -107,4 +184,77 @@ const handleSubmit = async () => {
     </n-form-item>
   </n-form>
   </n-space>
+
+  <page-title>新生注册提醒</page-title>
+  <n-space style="padding: 0 24px">
+
+  <n-form style="max-width: 400px">
+  <n-form-item>
+    <n-alert type="info" style="width: 400px">
+      表单的初始值为当前系统的数据
+    </n-alert>
+  </n-form-item>
+  <n-form-item>
+    <n-input
+      v-model:value="registerTips"
+      type="textarea"
+      placeholder="请输入新生注册提醒"
+    />
+  </n-form-item>
+
+  <n-form-item>
+    <n-space>
+      <n-button id="update" type="success" @click="noticeSubmit">
+        发布提醒
+      </n-button>
+      <n-button secondary type="error" id="clear" @click="noticeReset">
+        重置表单
+      </n-button>
+    </n-space>
+  </n-form-item>
+</n-form>
+  </n-space>
+  <page-title>链接编辑</page-title>
+  <n-space style="padding: 0 24px">
+
+<n-form style="max-width: 400px">
+<n-form-item>
+  <n-alert type="info" style="width: 400px">
+    表单的初始值为当前系统的数据
+  </n-alert>
+</n-form-item>
+<n-form-item>
+  <n-input
+    v-model:value="jpgUrlValue"
+    type="textarea"
+    placeholder="请输入图片URL"
+  />
+</n-form-item>
+<n-form-item>
+  <n-input
+    v-model:value="fileUrlValue"
+    type="textarea"
+    placeholder="请输入文档URL"
+  />
+</n-form-item>
+<n-form-item>
+  <n-input
+    v-model:value="schoolBusUrlValue"
+    type="textarea"
+    placeholder="请输入校车URL"
+  />
+</n-form-item>
+
+<n-form-item>
+  <n-space>
+    <n-button id="update" type="success" @click="urlSubmit">
+      修改前缀
+    </n-button>
+    <n-button secondary type="error" id="clear" @click="urlReset">
+      重置表单
+    </n-button>
+  </n-space>
+</n-form-item>
+</n-form>
+</n-space>
 </template>
